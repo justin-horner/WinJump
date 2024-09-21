@@ -45,10 +45,6 @@ public class WinJumpManager : IDisposable {
             () => {
                 return config.JumpTo.Select(t => t.Shortcut).All(shortcut =>
                     _keyboardHook.RegisterHotKey(shortcut.ModifierKeys, shortcut.Keys));
-            },
-            () => {
-                return config.MoveWindowTo.Select(t => t.Shortcut).All(shortcut =>
-                    _keyboardHook.RegisterHotKey(shortcut.ModifierKeys, shortcut.Keys));
             }
         };
 
@@ -79,19 +75,6 @@ public class WinJumpManager : IDisposable {
             if(jumpTo != null) {
                 _thread?.JumpTo(jumpTo.Desktop - 1);
                 return;
-            }
-
-            // Finally, look for move window shortcuts
-            JumpWindowToDesktop? moveTo = config.MoveWindowTo.FirstOrDefault(x => x.Shortcut.IsEqual(pressed));
-
-            // Is it the move window shortcut?
-            if(moveTo != null) {
-                // Move the current window to the specified desktop
-                _thread?.MoveWindowToDesktop(moveTo.Desktop - 1);
-
-                if(moveTo.Follow) {
-                    _thread?.JumpTo(moveTo.Desktop - 1);
-                }
             }
         };
 

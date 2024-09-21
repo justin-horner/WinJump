@@ -14,9 +14,6 @@ internal sealed class Config {
     private static readonly string APPDATA_PATH = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "WinJump");
     public static readonly string LOCATION = Path.Combine(APPDATA_PATH, "config.json");
 
-    [JsonProperty("move-window-to")]
-    public required List<JumpWindowToDesktop> MoveWindowTo { get; set; }
-
     [JsonProperty("jump-to")]
     public required List<JumpTo> JumpTo { get; set; }
 
@@ -41,20 +38,6 @@ internal sealed class Config {
                     }
 
                     if(config.JumpTo[i].Desktop <= 0) {
-                        throw new Exception("Invalid desktop number");
-                    }
-                }
-            }
-
-            // Check for move windows with duplicate shortcuts
-            for(int i = 0; i < config.MoveWindowTo.Count; i++) {
-                var shortcut = config.MoveWindowTo[i].Shortcut;
-                for(int j = i + 1; j < config.MoveWindowTo.Count; j++) {
-                    if(config.MoveWindowTo[j].Shortcut.IsEqual(shortcut)) {
-                        throw new Exception("Duplicate move window shortcut");
-                    }
-
-                    if(config.MoveWindowTo[i].Desktop <= 0) {
                         throw new Exception("Invalid desktop number");
                     }
                 }
@@ -94,14 +77,6 @@ internal sealed class Config {
         }
 
         return new Config {
-            MoveWindowTo = jumpTo.Select(x => new JumpWindowToDesktop {
-                Shortcut = new Shortcut {
-                    Keys = x.Shortcut.Keys,
-                    ModifierKeys = x.Shortcut.ModifierKeys | ModifierKeys.Shift
-                },
-                Desktop = x.Desktop,
-                Follow = false
-            }).ToList(),
             JumpTo = jumpTo,
         };
     }
@@ -147,8 +122,6 @@ public sealed class Shortcut {
     public bool ModifiersEqual(Shortcut other) {
         return ModifierKeys == other.ModifierKeys;
     }
-
-    // Parsing stuff
 
     // Parses the shortcut from a string
     public static Shortcut FromString(string expression) {
