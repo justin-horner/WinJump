@@ -5,7 +5,6 @@ using System.Diagnostics;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading;
-using System.Windows;
 using WinJump.Core.VirtualDesktopDefinitions;
 using WinJump.UI;
 using Application = System.Windows.Application;
@@ -30,7 +29,6 @@ public class WinJumpManager : IDisposable {
     private readonly STAThread? _thread; // tied exactly to the lifecycle of explorer.exe
     private readonly ExplorerMonitor _explorerMonitor = new();
     private readonly KeyboardHook _keyboardHook = new();
-    private readonly MouseHook _mouseHook = new();
     private bool _lightMode { get; set; }
     private uint _currentDesktop { get; set; }
     private uint? _lastDesktop { get; set; }
@@ -46,10 +44,6 @@ public class WinJumpManager : IDisposable {
         var registerShortcuts = new List<Func<bool>> {
             () => {
                 return config.JumpTo.Select(t => t.Shortcut).All(shortcut =>
-                    _keyboardHook.RegisterHotKey(shortcut.ModifierKeys, shortcut.Keys));
-            },
-            () => {
-                return config.ToggleGroups.Select(t => t.Shortcut).All(shortcut =>
                     _keyboardHook.RegisterHotKey(shortcut.ModifierKeys, shortcut.Keys));
             },
             () => {
@@ -73,10 +67,6 @@ public class WinJumpManager : IDisposable {
             LastLoadRequiredExplorerRestart = false;
         }
 
-        if(config.ChangeDesktopsWithScroll) {
-            _mouseHook.Register();
-        }
-
         // Add handler for hotkey press events
         _keyboardHook.KeyPressed += (_, args) => {
             Shortcut pressed = new Shortcut {
@@ -86,19 +76,12 @@ public class WinJumpManager : IDisposable {
 
             // First, scan for jump to shortcuts
             JumpTo? jumpTo = config.JumpTo.FirstOrDefault(x => x.Shortcut.IsEqual(pressed));
-
             if(jumpTo != null) {
-                if(config.JumpCurrentGoesToLast && _lastDesktop != null) {
-                    _thread?.JumpTo(jumpTo.Desktop - 1, _lastDesktop.Value);
-                } else {
-                    _thread?.JumpTo(jumpTo.Desktop - 1);
-                }
-
+                _thread?.JumpTo(jumpTo.Desktop - 1);
                 return;
             }
 
             // Finally, look for move window shortcuts
-
             JumpWindowToDesktop? moveTo = config.MoveWindowTo.FirstOrDefault(x => x.Shortcut.IsEqual(pressed));
 
             // Is it the move window shortcut?
@@ -108,32 +91,6 @@ public class WinJumpManager : IDisposable {
 
                 if(moveTo.Follow) {
                     _thread?.JumpTo(moveTo.Desktop - 1);
-                }
-            }
-
-            // Finally, look for a toggle group
-
-            ToggleGroup? toggleGroup = config.ToggleGroups.FirstOrDefault(x => x.Shortcut.IsEqual(pressed));
-
-            if(toggleGroup != null) {
-                _thread?.JumpToNext(toggleGroup.Desktops.Select(x => x - 1).ToArray());
-
-                return;
-            }
-        };
-
-        // Add a handler for mouse scroll events
-        _mouseHook.MouseScrolled += (_, args) => {
-            // Check to make sure the mouse event happened over the taskbar
-            if(args.y < SystemParameters.PrimaryScreenHeight - 40) return;
-
-            int? current = _thread?.GetCurrentDesktop();
-
-            if(current != null) {
-                if(args.up) {
-                    _thread?.JumpToNoHack((uint) (current.Value + 1));
-                } else {
-                    _thread?.JumpToNoHack((uint) (current.Value - 1));
                 }
             }
         };
@@ -173,7 +130,6 @@ public class WinJumpManager : IDisposable {
         _thread?.Dispose();
         _explorerMonitor.Dispose();
         _keyboardHook.Dispose();
-        _mouseHook.Dispose();
         GC.SuppressFinalize(this);
     }
 }

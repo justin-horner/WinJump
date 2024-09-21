@@ -18,17 +18,8 @@ internal sealed class Config {
     [JsonProperty("move-window-to")]
     public required List<JumpWindowToDesktop> MoveWindowTo { get; set; }
 
-    [JsonProperty("toggle-groups")]
-    public required List<ToggleGroup> ToggleGroups { get; set; }
-
     [JsonProperty("jump-to")]
     public required List<JumpTo> JumpTo { get; set; }
-
-    [JsonProperty("jump-current-goes-to-last")]
-    public required bool JumpCurrentGoesToLast { get; set; }
-
-    [JsonProperty("change-desktops-with-scroll")]
-    public required bool ChangeDesktopsWithScroll { get; set; }
 
     public static Config Load() {
         try {
@@ -51,20 +42,6 @@ internal sealed class Config {
                     }
 
                     if(config.JumpTo[i].Desktop <= 0) {
-                        throw new Exception("Invalid desktop number");
-                    }
-                }
-            }
-
-            // Check for toggle groups with duplicate shortcuts
-            for(int i = 0; i < config.ToggleGroups.Count; i++) {
-                var shortcut = config.ToggleGroups[i].Shortcut;
-                for(int j = i + 1; j < config.ToggleGroups.Count; j++) {
-                    if(config.ToggleGroups[j].Shortcut.IsEqual(shortcut)) {
-                        throw new Exception("Duplicate toggle group shortcut");
-                    }
-
-                    if(config.ToggleGroups[i].Desktops.Any((d) => d <= 0)) {
                         throw new Exception("Invalid desktop number");
                     }
                 }
@@ -126,9 +103,6 @@ internal sealed class Config {
                 Follow = false
             }).ToList(),
             JumpTo = jumpTo,
-            ToggleGroups = [],
-            JumpCurrentGoesToLast = true,
-            ChangeDesktopsWithScroll = false
         };
     }
 }
@@ -140,17 +114,6 @@ public sealed class JumpWindowToDesktop {
     public required uint Desktop { get; set; }
 
     public required bool Follow { get; set; }
-}
-
-public sealed class ToggleGroup {
-    [JsonConverter(typeof(ShortcutConverter))]
-    public required Shortcut Shortcut { get; set; }
-
-    public required List<int> Desktops { get; set; }
-
-    public bool IsEqual(ToggleGroup other) {
-        return Shortcut.IsEqual(other.Shortcut);
-    }
 }
 
 public sealed class JumpTo {
