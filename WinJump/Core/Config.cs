@@ -11,9 +11,8 @@ namespace WinJump.Core;
 /// Handles loading the configuration file
 /// </summary>
 internal sealed class Config {
-    public static readonly string LOCATION = Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
-        ".winjump");
+    private static readonly string APPDATA_PATH = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "WinJump");
+    public static readonly string LOCATION = Path.Combine(APPDATA_PATH, "config.json");
 
     [JsonProperty("move-window-to")]
     public required List<JumpWindowToDesktop> MoveWindowTo { get; set; }
@@ -72,6 +71,7 @@ internal sealed class Config {
 
         var config = Default();
         string content = JsonConvert.SerializeObject(config, Formatting.Indented);
+        Directory.CreateDirectory(APPDATA_PATH);
         File.WriteAllText(LOCATION, content);
     }
 
