@@ -13,9 +13,14 @@ namespace WinJump.Core;
 internal sealed class Config {
     private static readonly string APPDATA_PATH = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "WinJump");
     public static readonly string LOCATION = Path.Combine(APPDATA_PATH, "config.json");
+    public static readonly int MAX_STICKY_DESKTOPS = 10;
+    public static readonly int DEFAULT_STICKY_DESKTOPS = 4;
 
     [JsonProperty("jump-to")]
     public required List<JumpTo> JumpTo { get; set; }
+
+    [JsonProperty("sticky-desktops")]
+    public int StickyDesktops { get; set; }
 
     public static Config Load() {
         try {
@@ -78,6 +83,7 @@ internal sealed class Config {
 
         return new Config {
             JumpTo = jumpTo,
+            StickyDesktops = DEFAULT_STICKY_DESKTOPS
         };
     }
 }

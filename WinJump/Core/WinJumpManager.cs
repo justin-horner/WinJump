@@ -87,6 +87,12 @@ public class WinJumpManager : IDisposable {
             desktopChanged(_lightMode, desktop);
         });
 
+        // Create sticky desktops config
+        var desktopsToCreate = int.Clamp(config.StickyDesktops - _thread.GetDesktopCount(), 0, Config.MAX_STICKY_DESKTOPS);
+        for (var i = 0; i < desktopsToCreate; i++) {
+            _thread?.CreateDesktop();
+        }
+
         // This particular event fires immediately on initial register
         _explorerMonitor.OnColorSchemeChanged += lightMode => {
             _lightMode = lightMode;
@@ -164,10 +170,15 @@ internal sealed class STAThread : IDisposable {
         }
     }
 
-    // public void BeginInvoke(Delegate dlg, params Object[] args) {
-    //     if (ctx == null) throw new ObjectDisposedException("STAThread");
-    //     ctx.Post(_ => dlg.DynamicInvoke(args), null);
-    // }
+    public void CreateDesktop() {
+        WrapCall(() => {
+            api.CreateDesktop();
+        });
+    }
+
+    public int GetDesktopCount() {
+        return api.GetDesktopCount();
+    }
 
     public int GetCurrentDesktop() {
         if(ctx == null) throw new ObjectDisposedException("STAThread");
@@ -175,18 +186,6 @@ internal sealed class STAThread : IDisposable {
         var blocks = new BlockingCollection<int>();
 
         return WrapCall(() => { blocks.Add(api.GetCurrentDesktop()); }) ? blocks.Take() : 0;
-    }
-
-    // index must be 0-indexed
-    public void JumpTo(uint index, uint fallback) {
-        WrapCall(() => {
-            if(api.GetCurrentDesktop() == index) {
-                // Go to last desktop instead
-                index = fallback;
-            }
-
-            api.JumpToDesktop((int) index);
-        }, true);
     }
 
     public void JumpTo(uint index) {
