@@ -46,7 +46,7 @@ public class TrayModel {
         CommandAction = () => {
             // Open website
             Process.Start(new ProcessStartInfo {
-                FileName = "https://github.com/widavies/WinJump",
+                FileName = "https://github.com/justin-horner/WinJump",
                 UseShellExecute = true
             });
         }
